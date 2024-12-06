@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "wiring_private.h": "c",
+        "pins_arduino.h": "c"
+    }
+}
