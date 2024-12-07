@@ -34,7 +34,7 @@ typedef uint8_t GPIO_PIN_t;
 #define PD1 (GPIO_PIN_t)(PIN_WIRE_SDA)       	// SDA
 #define PD2 (GPIO_PIN_t)(0)     
 #define PD3 (GPIO_PIN_t)(1)     
-#define PD5 (GPIO_PIN_t)(LED_BUILTIN_TX)        // TX_LED
+#define PD5 (GPIO_PIN_t)(LED_BUILTIN_TX)        // CTS, TX_LED
 #define PE6 (GPIO_PIN_t)(7)     
 
 #define GPIO_PB0 PB0    // RX_LED, SS
