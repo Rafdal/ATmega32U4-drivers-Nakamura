@@ -61,3 +61,9 @@ void PWM_write(PWM_pin_t pin, uint8_t val)
 			break;
 	}
 }
+
+void PWM_write_both(uint8_t OC4A_val, uint8_t OC4D_val)
+{
+	OCR4A = OC4A_val;
+	OCR4D = OC4D_val;
+}

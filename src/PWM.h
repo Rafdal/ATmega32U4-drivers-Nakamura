@@ -46,6 +46,8 @@ enum PWM_PRESCALER {
  * @param mode - PWM mode (FAST_PWM or PHASE_FREQ_CORRECT_PWM)
  */
 void PWM_setup(uint8_t prescaler = PWM_PRESCALER_2, uint8_t top_val = 160, uint8_t mode = PHASE_FREQ_CORRECT_PWM);
+
 void PWM_write(PWM_pin_t pin, uint8_t val);
+void PWM_write_both(uint8_t OC4A_val, uint8_t OC4D_val);
 
 #endif // PWM_H
