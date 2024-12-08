@@ -54,4 +54,7 @@ void GPIO_mode(GPIO_PIN_t pin, uint8_t mode);   // INPUT, INPUT_PULLUP, OUTPUT
 uint8_t GPIO_read(GPIO_PIN_t pin);
 void GPIO_write(GPIO_PIN_t pin, uint8_t val);
 
+void GPIO_toggle(GPIO_PIN_t pin);
+
+
 #endif // GPIO_H
