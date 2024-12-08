@@ -7,6 +7,7 @@
  * @author Rafael Dalzotto (rdalzotto@itba.edu.ar)
  */
 
+static uint8_t top_val = 255;
 
 void PWM_setup(uint8_t prescaler, uint8_t top_value, uint8_t mode)
 {
@@ -32,6 +33,7 @@ void PWM_setup(uint8_t prescaler, uint8_t top_value, uint8_t mode)
 
 	// Set TOP value
 	OCR4C = top_value;	// 8-bit PWM
+	top_val = top_value;
 
 	// Prescaler Setup
 	// 15.12.2 TCCR4B = Timer/Counter Control Register B (p. 167)
@@ -51,11 +53,11 @@ void PWM_write(PWM_pin_t pin, uint8_t val)
 	switch(pin)
 	{
 		case OC4A:
-			OCR4A = val;	// set pwm duty
+			OCR4A = map(val, 0, 100, 0, top_val);	// set pwm duty
 			break;
 			
 		case OC4D:				
-			OCR4D = val;	// set pwm duty
+			OCR4D = map(val, 0, 100, 0, top_val);	// set pwm duty
 			break;
 		default:
 			break;
@@ -64,6 +66,6 @@ void PWM_write(PWM_pin_t pin, uint8_t val)
 
 void PWM_write_both(uint8_t OC4A_val, uint8_t OC4D_val)
 {
-	OCR4A = OC4A_val;
-	OCR4D = OC4D_val;
+	OCR4A = map(OC4A_val, 0, 100, 0, top_val);
+	OCR4D = map(OC4D_val, 0, 100, 0, top_val);
 }

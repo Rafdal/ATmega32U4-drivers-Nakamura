@@ -32,3 +32,16 @@ void GPIO_write(GPIO_PIN_t pin, uint8_t val)
 
 	SREG = oldSREG;
 }
+
+void GPIO_toggle(GPIO_PIN_t pin)
+{
+	uint8_t bit = digitalPinToBitMask(pin);
+	volatile uint8_t *out = portOutputRegister(digitalPinToPort(pin));
+
+	uint8_t oldSREG = SREG;
+	cli();
+
+	*out ^= bit;
+
+	SREG = oldSREG;
+}
