@@ -140,5 +140,9 @@ void Motors::drive_high_level(uint8_t power, int speed, int turn)
 
     uint8_t power_L = abs( (left * power) / max_v);
     uint8_t power_R = abs( (right * power) / max_v);
+    // Serial.print("L: ");
+    // Serial.print(power_L);
+    // Serial.print("\tR: ");
+    // Serial.print(power_R);
     this->drive(power_L, power_R, (left > 0) ? FORWARD : REVERSE, (right > 0) ? FORWARD : REVERSE);
 }

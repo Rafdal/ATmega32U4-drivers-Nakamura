@@ -17,6 +17,10 @@ bool calib_mode = false;
 bool run = false;
 unsigned long last_time = 0;
 
+uint8_t speed = 0;
+unsigned long run_start_time = 0;
+unsigned long run_time_ms = 0;
+
 void motor_test_sequence(void); // No usado, NO USA PID
 
 void setup()
@@ -27,11 +31,14 @@ void setup()
 	motors.set_logic(REVERSE, FORWARD, false);
 	motors.set_compensation(-0.03, 0);	// Ajuste del desbalance de los motores
 
+	// speed = 100;
+	// run_time_ms = 15000;
+
 	pid.set_out_limits(-100, 100);	// Saturación de la salida
 	pid.set_integral_limit(100);	// Saturación de la integral
 	pid.set_freq(40);				// Hz
 
-	pid.set_K(3.5, 2.5, 0.1);		// ANDA FLAMA
+	pid.set_K(11.7f, 1.08f, 0.4f);		// ANDA FLAMA
 	// pid.kP = 16.0; // Oscila
 
 	GPIO_mode(LED_G1, OUTPUT);
@@ -92,6 +99,7 @@ void setup()
 		LineSensor_read();
 		run = true;
 		motors.enable(true, true);
+		run_start_time = millis();
 	});
 }
 
@@ -112,13 +120,13 @@ void loop()
 		last_time = millis();
 		int line = LineSensor_read();
 		int turn = -(int)pid.run(line, 0);
-		motors.drive_high_level(100, 0, turn);
-		Serial.print("Line: ");
-		Serial.print(line);
-		Serial.print("\tTurn: ");
-		Serial.print(turn);
-		Serial.print("\tInt: ");
-		Serial.println(pid.integral_value(), 0);
+		motors.drive_high_level(100, speed, turn);
+		// Serial.print("\tLine: ");
+		// Serial.print(line);
+		// Serial.print("\tTurn: ");
+		// Serial.print(turn);
+		// Serial.print("\tInt: ");
+		// Serial.println(pid.integral_value(), 0);
 
 		GPIO_toggle(LED_G2);
 
@@ -132,6 +140,15 @@ void loop()
 			GPIO_write(LED_G1, HIGH);
 			motors.enable(true, true);
 		}
+
+		// Si run time = 0, corre indefinidamente
+		if (run_time_ms != 0 && (millis() - run_start_time > run_time_ms))
+		{
+			run = false;
+			motors.disable();
+			GPIO_write(LED_G1, LOW);
+			GPIO_write(LED_G2, LOW);
+		}
 	}
 }
 
@@ -144,7 +161,7 @@ void motor_test_sequence()
 	GPIO_write(LED_B, HIGH);
 	delay(1000);
 
-	uint8_t power = 100;
+	/* uint8_t power = 100;
 	int8_t line_start, line_end, line_delta;
 	for (int i = 0; i < 6; i++)
 	{
@@ -166,7 +183,7 @@ void motor_test_sequence()
 		Serial.print("Line delta: ");
 		Serial.println(line_delta);
 
-		motors.drive_high_level(power, 0, -100);
+		motors.drive_high_level(power, 35, -100);
 		motors.enable(true, true);
 		delay(120);
 		motors.disable();
@@ -174,7 +191,7 @@ void motor_test_sequence()
 		delay(1000);
 
 		power -= 5;
-	}
+	} */
 
 	GPIO_write(LED_B, LOW);
 }
