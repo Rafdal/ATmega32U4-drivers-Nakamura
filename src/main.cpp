@@ -38,7 +38,7 @@ void setup()
 	pid.set_integral_limit(100);	// Saturación de la integral
 	pid.set_freq(40);				// Hz
 
-	pid.set_K(11.7f, 1.08f, 0.4f);		// ANDA FLAMA
+	pid.set_K(11.7f, 0.0f, 0.27f);		// ANDA FLAMA
 	// pid.kP = 16.0; // Oscila
 
 	GPIO_mode(LED_G1, OUTPUT);
