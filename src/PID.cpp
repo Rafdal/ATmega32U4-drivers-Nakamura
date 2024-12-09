@@ -25,6 +25,13 @@ unsigned long PID::deltaT_ms()
     return (unsigned long)(this->dT * 1000);
 }
 
+void PID::set_K(float kP, float kI, float kD)
+{
+    this->kP = kP;
+    this->kI = kI;
+    this->kD = kD;
+}
+
 void PID::set_out_limits(float min, float max)
 {
     this->min = min;

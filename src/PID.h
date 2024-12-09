@@ -25,6 +25,8 @@ public:
 
     unsigned long deltaT_ms();
 
+    void set_K(float kP, float kI, float kD);
+
     void set_freq(unsigned int freq);
     void set_out_limits(float min, float max);
     void set_integral_limit(float integral_limit);

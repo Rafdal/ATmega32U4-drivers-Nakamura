@@ -102,6 +102,11 @@ void Motors::enable(bool enable_L, bool enable_R)
     GPIO_write(this->R_cfg.pin_en, this->R_cfg.active_low ^ enable_R);
 }
 
+void Motors::disable(void)
+{
+    this->enable(false, false);
+}
+
 void Motors::drive(uint8_t power_L, uint8_t power_R, motor_dir_t dir_L, motor_dir_t dir_R)
 {
     GPIO_write(this->L_cfg.pin_dir, this->L_cfg.default_dir ^ dir_L);

@@ -27,21 +27,23 @@ void setup()
 	motors.set_logic(REVERSE, FORWARD, false);
 	motors.set_compensation(-0.03, 0);	// Ajuste del desbalance de los motores
 
-	pid.set_out_limits(-100, 100);
-	pid.set_integral_limit(100);
-	pid.set_freq(20);
-	pid.kP = 3.5;
-	pid.kI = 2.5;
+	pid.set_out_limits(-100, 100);	// Saturación de la salida
+	pid.set_integral_limit(100);	// Saturación de la integral
+	pid.set_freq(40);				// Hz
+
+	pid.set_K(3.5, 2.5, 0.1);		// ANDA FLAMA
+	// pid.kP = 16.0; // Oscila
 
 	GPIO_mode(LED_G1, OUTPUT);
 	GPIO_mode(LED_G2, OUTPUT);
 	GPIO_mode(LED_B, OUTPUT);
 
-	LineSensor_initFromEEPROM(LINE_BLACK);
+	LineSensor_initFromEEPROM(LINE_BLACK);	// Cargo la calibración guardada en la EEPROM
 
-	// Print calibration values and line reading
+	// STOP all, print Calibration and Line values
 	btn1.attachClick([](){
-		motors.enable(false, false);
+		motors.disable();
+		run = false;
 		GPIO_write(LED_B, HIGH);
 		LineSensor_printCalibration();
 		int line = LineSensor_read();
@@ -72,7 +74,7 @@ void setup()
 	// STOP EVERYTHING
 	btn2.attachClick([](){
 		run = false;
-		motors.enable(false, false);
+		motors.disable();
 		GPIO_write(LED_G1, LOW);
 		GPIO_write(LED_G2, LOW);
 	});
@@ -85,6 +87,7 @@ void setup()
 		GPIO_write(LED_B, HIGH);
 	});
 	btn2.attachLongPressStop([](){
+		delay(500);
 		GPIO_write(LED_B, LOW);
 		LineSensor_read();
 		run = true;
@@ -114,14 +117,14 @@ void loop()
 		Serial.print(line);
 		Serial.print("\tTurn: ");
 		Serial.print(turn);
-		Serial.print("\tIntegral: ");
-		Serial.println(pid.integral_value());
+		Serial.print("\tInt: ");
+		Serial.println(pid.integral_value(), 0);
 
 		GPIO_toggle(LED_G2);
 
 		if (LineSensor_lineOutOfRange())
 		{
-			motors.enable(false, false);
+			motors.disable();
 			GPIO_write(LED_G1, LOW);
 		}
 		else
@@ -151,7 +154,7 @@ void motor_test_sequence()
 		line_start = LineSensor_read();
 		motors.enable(true, true);
 		delay(120);
-		motors.enable(false, false);
+		motors.disable();
 		
 		delay(500);
 		line_end = LineSensor_read();
@@ -166,7 +169,7 @@ void motor_test_sequence()
 		motors.drive_high_level(power, 0, -100);
 		motors.enable(true, true);
 		delay(120);
-		motors.enable(false, false);
+		motors.disable();
 
 		delay(1000);
 

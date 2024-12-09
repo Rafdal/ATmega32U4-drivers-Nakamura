@@ -43,6 +43,7 @@ public:
 
     // Activar puente H (true = activo, false = desactivado)
     void enable(bool enable_L, bool enable_R);
+    void disable(void);
 
     /**
      * @brief Maneja la velocidad y dirección de los motores
