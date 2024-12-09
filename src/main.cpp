@@ -38,7 +38,7 @@ void setup()
 	pid.set_integral_limit(100);	// Saturación de la integral
 	pid.set_freq(40);				// Hz
 
-	pid.set_K(11.7f, 0.0f, 0.27f);		// ANDA FLAMA
+	pid.set_K(11.7f, 0.0f, 0.25f);		// ANDA FLAMA
 	// pid.kP = 16.0; // Oscila
 
 	GPIO_mode(LED_G1, OUTPUT);
@@ -86,8 +86,17 @@ void setup()
 		GPIO_write(LED_G2, LOW);
 	});
 
-	// TEST MOTORS
-	btn2.attachDoubleClick(motor_test_sequence);
+	// STATIC TEST
+	btn2.attachDoubleClick([](){
+		GPIO_write(LED_B, HIGH);
+		delay(1000);
+		run = true;
+		motors.enable(true, true);
+		speed = 0;
+		run_time_ms = 0;
+		run_start_time = millis();
+		GPIO_write(LED_B, LOW);
+	});
 
 	// RUN
 	btn2.attachLongPressStart([](){
@@ -98,6 +107,8 @@ void setup()
 		GPIO_write(LED_B, LOW);
 		LineSensor_read();
 		run = true;
+		speed = 100;
+		run_time_ms = 15000;
 		motors.enable(true, true);
 		run_start_time = millis();
 	});
