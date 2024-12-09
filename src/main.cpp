@@ -61,7 +61,7 @@ void setup()
 	// Print readings
 	btn2.attachClick([](){
 		LineSensor_printReadings();
-		int line = LineSensor_read(50);
+		int line = LineSensor_read(70);
 		Serial.print("Line: ");
 		Serial.println(line);
 	});
@@ -93,25 +93,25 @@ void loop()
 	if (stream_raw && millis() - last_time > 20)
 	{
 		last_time = millis();
-		// Serial.write((uint8_t)0xFF);
-		// Serial.write((uint8_t)0x00);
-		// LineSensor_printReadingsBinary();
-		LineSensor_printReadings();
-		int line = LineSensor_read(50);
-		// Serial.write((uint8_t)(line & 0x00FF));
-		// Serial.write((uint8_t)((line >> 8) & 0x00FF));
-		Serial.print("\tLine: ");
-		Serial.println(line);
+		Serial.write((uint8_t)0xFF);
+		Serial.write((uint8_t)0x00);
+		LineSensor_printReadingsBinary();
+		// LineSensor_printReadings();
+		int line = (unsigned int) LineSensor_read(70);
+		Serial.write((uint8_t)(line & 0x00FF));
+		Serial.write((uint8_t)((line >> 8) & 0x00FF));
+		// Serial.print("\tLine: ");
+		// Serial.println(line);
 	}
 
 	if (stream && millis() - last_time > 20)
 	{
 		last_time = millis();
-		int line = LineSensor_read(50);
+		int line = LineSensor_read(70);
 		Serial.write((uint8_t)0xFF);
 		Serial.write((uint8_t)0x00);
-		Serial.write((uint8_t)((line >> 8) & 0x00FF));
 		Serial.write((uint8_t)(line & 0x00FF));
+		Serial.write((uint8_t)((line >> 8) & 0x00FF));
 		// Serial.println(line);
 		GPIO_write(LED_G2, LineSensor_lineDetected());
 	}

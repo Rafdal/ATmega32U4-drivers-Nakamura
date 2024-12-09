@@ -17,7 +17,7 @@
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define POINTS_PER_SENSOR   16
+#define POINTS_PER_SENSOR   10
 #define N_SENSORS           8       // Cantidad de sensores
 
 /*******************************************************************************
@@ -59,7 +59,7 @@ void LineSensor_resetCalibration();
 /**
  * @brief Retorna la posición de la linea respecto del arreglo de sensores
  * @param minimum_brightness    Mínimo valor de brillo que se considera parte de la línea
- *                              (porcentaje expresado de 0 a 100)
+ *                              (valor expresado de 0 a 255)
  * @return Posición de la línea entre -LINE_RANGE y LINE_RANGE
 */
 int LineSensor_read(uint8_t minimum_brightness);
