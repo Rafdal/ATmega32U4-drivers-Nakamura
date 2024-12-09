@@ -61,6 +61,13 @@ void Motors::set_logic(bool dir_L, bool dir_R, bool EN_active_low)
     GPIO_write(this->R_cfg.pin_dir, dir_R);
 }
 
+void Motors::set_compensation(float comp_L, float comp_R)
+{
+    this->L_cfg.comp = comp_L;
+    this->R_cfg.comp = comp_R;
+}
+
+
 // Test
 void Motors::test_L_motor(uint8_t power, motor_dir_t dir, unsigned long ms)
 {
@@ -112,30 +119,21 @@ void Motors::drive(uint8_t power_L, uint8_t power_R, motor_dir_t dir_L, motor_di
 }
 
 
-// void Motors::drive_high_level(int8_t power, int8_t direction)
-// {
-//     uint8_t power_L, power_R;
-//     motor_dir_t dir_L, dir_R;
+void Motors::drive_high_level(uint8_t power, int speed, int turn)
+{
+    long left = (speed + turn);
+    long right = (speed - turn);
 
-//     if (direction == 0) // no turn
-//     {
-//         power_L = power;
-//         power_R = power;
-//         dir_L = (power_L >= 0) ? (FORWARD) : (REVERSE);
-//         dir_R = dir_L;
-//     }
-//     else if (direction > 0) // turn right
-//     {
-//         power_L = power;
-//         power_R = power - direction;
-//         dir_L = (power_L >= 0) ? (FORWARD) : (REVERSE);
-//         dir_R = (power_R >= 0) ? (FORWARD) : (REVERSE);
-//     }
-//     else // turn left
-//     {
-//         power_L = power + direction;
-//         power_R = power;
-//         dir_L = (power_L >= 0) ? (FORWARD) : (REVERSE);
-//         dir_R = (power_R >= 0) ? (FORWARD) : (REVERSE);
-//     }
-// }
+    long max_v = (abs(left) > abs(right)) ? (abs(left)) : (abs(right));
+
+    max_v = (max_v > 100) ? (max_v) : (100);
+
+    if (this->L_cfg.comp != 0)
+        left = (long)(((float)left) * (1.0 + this->L_cfg.comp));
+    if (this->R_cfg.comp != 0)
+        right = (long)(((float)right) * (1.0 + this->R_cfg.comp));
+
+    uint8_t power_L = abs( (left * power) / max_v);
+    uint8_t power_R = abs( (right * power) / max_v);
+    this->drive(power_L, power_R, (left > 0) ? FORWARD : REVERSE, (right > 0) ? FORWARD : REVERSE);
+}

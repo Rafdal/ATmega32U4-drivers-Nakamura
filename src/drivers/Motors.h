@@ -11,16 +11,18 @@ typedef enum MOTOR_DIR {
 class Motors {
 private:
         typedef struct MOTOR_CFG {
-            MOTOR_CFG() : active_low(0), default_dir(0), pin_pwm(0), pin_dir(0), pin_en(0) {}
+            MOTOR_CFG() : active_low(0), default_dir(0), pin_pwm(0), pin_dir(0), pin_en(0), comp(0) {}
             bool active_low;
             bool default_dir;
             uint8_t pin_pwm;
             uint8_t pin_dir;
             uint8_t pin_en;
+            float comp;
         } motor_cfg_t;
 
         motor_cfg_t L_cfg;
         motor_cfg_t R_cfg;
+
 
 public:
 
@@ -31,7 +33,8 @@ public:
 
     // Electric Setup
     void flip_L_R(bool flip);
-    void set_logic(bool dir_L, bool dir_R, bool EN_active_low);
+    void set_logic(bool dir_L, bool dir_R, bool EN_active_low = false);
+    void set_compensation(float comp_L, float comp_R);
 
     // Test
     void test_L_motor(uint8_t power, motor_dir_t dir = FORWARD, unsigned long msecs = 1000);
@@ -52,10 +55,10 @@ public:
 
     /**
      * @brief Maneja la velocidad y dirección de los motores de forma más simple
-     * @param power Potencia de ambos motores (-100 a 100)
-     * @param direction Dirección de ambos motores, de -100 (Izq) a 100 (Der)
+     * @param speed Potencia de ambos motores (-100 a 100)
+     * @param turn Dirección de ambos motores, de -100 (Izq) a 100 (Der)
      */
-    // void drive_high_level(int8_t power, int8_t direction);
+    void drive_high_level(uint8_t power, int speed, int turn);
 
 };
 

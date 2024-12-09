@@ -1,26 +1,23 @@
 #include <Arduino.h>
-
-
 #include <OneButton.h>
 
 #include "drivers/board.h"	// ADC, PWM, GPIO
 
 #include "drivers/Motors.h"
-
 #include "drivers/LineSensor.h"
-
-uint8_t ir_sen_pins[] = {SENSOR_1, SENSOR_2, SENSOR_3, SENSOR_4, SENSOR_5, SENSOR_6, SENSOR_7, SENSOR_8};
-uint8_t ir_sen_vals[8];
+#include "PID.h"
 
 OneButton btn1(BTN1, true, false);
 OneButton btn2(BTN2, true, false);
 
 Motors motors;
+PID pid;
 
-bool stream = false;
 bool calib_mode = false;
-bool stream_raw = false;
+bool run = false;
 unsigned long last_time = 0;
+
+void motor_test_sequence(void);
 
 void setup()
 {
@@ -28,6 +25,13 @@ void setup()
 
 	motors.begin();
 	motors.set_logic(REVERSE, FORWARD, false);
+	motors.set_compensation(-0.03, 0);	// Ajuste del desbalance de los motores
+
+	pid.set_out_limits(-100, 100);
+	pid.set_integral_limit(100);
+	pid.set_freq(20);
+	pid.kP = 3.5;
+	// pid.kI = 2.5;
 
 	GPIO_mode(LED_G1, OUTPUT);
 	GPIO_mode(LED_G2, OUTPUT);
@@ -35,12 +39,19 @@ void setup()
 
 	LineSensor_initFromEEPROM(LINE_BLACK);
 
-	// Print calibration values
+	// Print calibration values and line reading
 	btn1.attachClick([](){
+		motors.enable(false, false);
+		GPIO_write(LED_B, HIGH);
 		LineSensor_printCalibration();
+		int line = LineSensor_read();
+		Serial.print("Line: ");
+		Serial.println(line);
+		delay(10);
+		GPIO_write(LED_B, LOW);
 	});
 
-	// Calibrate
+	// CALIBRATE
 	btn1.attachDoubleClick([](){
 		calib_mode = !calib_mode;
 		GPIO_write(LED_B, calib_mode);
@@ -50,7 +61,7 @@ void setup()
 		}
 	});
 
-	// Save calibration
+	// Save calibration to EEPROM
 	btn1.attachLongPressStart([](){
 		GPIO_write(LED_B, HIGH);
 		LineSensor_saveCalibrationToEEPROM();
@@ -58,26 +69,27 @@ void setup()
 		GPIO_write(LED_B, LOW);
 	});
 
-	// Print readings
+	// STOP EVERYTHING
 	btn2.attachClick([](){
-		LineSensor_printReadings();
-		int line = LineSensor_read(70);
-		Serial.print("Line: ");
-		Serial.println(line);
+		run = false;
+		motors.enable(false, false);
 	});
 
-	btn2.attachDoubleClick([](){
-		stream_raw = !stream_raw;
-		GPIO_write(LED_G1, stream_raw);
-	});
+	// TEST MOTORS
+	btn2.attachDoubleClick(motor_test_sequence);
 
+	// RUN
 	btn2.attachLongPressStart([](){
-		stream = !stream;
-		GPIO_write(LED_G2, LOW);
-		GPIO_write(LED_G1, stream);
+		GPIO_write(LED_B, HIGH);
 	});
-
+	btn2.attachLongPressStop([](){
+		GPIO_write(LED_B, LOW);
+		LineSensor_read();
+		run = true;
+		motors.enable(true, true);
+	});
 }
+
 
 void loop()
 {
@@ -90,29 +102,72 @@ void loop()
 		LineSensor_calibrateSensors();
 	}
 
-	if (stream_raw && millis() - last_time > 20)
+	if (run && millis() - last_time > pid.deltaT_ms())
 	{
 		last_time = millis();
-		Serial.write((uint8_t)0xFF);
-		Serial.write((uint8_t)0x00);
-		LineSensor_printReadingsBinary();
-		// LineSensor_printReadings();
-		int line = (unsigned int) LineSensor_read(70);
-		Serial.write((uint8_t)(line & 0x00FF));
-		Serial.write((uint8_t)((line >> 8) & 0x00FF));
-		// Serial.print("\tLine: ");
-		// Serial.println(line);
+		int line = LineSensor_read();
+		float turn = -pid.run(line, 0);
+		motors.drive_high_level(100, 0, (int)turn);
+		Serial.print("Line: ");
+		Serial.print(line);
+		Serial.print("\tTurn: ");
+		Serial.print(turn, 5);
+		Serial.print("\tIntegral: ");
+		Serial.println(pid.integral_value());
+
+		if (LineSensor_lineOutOfRange())
+		{
+			motors.enable(false, false);
+			GPIO_write(LED_G1, LOW);
+		}
+		else
+		{
+			GPIO_write(LED_G1, HIGH);
+			motors.enable(true, true);
+		}
+	}
+}
+
+
+
+
+
+void motor_test_sequence()
+{
+	GPIO_write(LED_B, HIGH);
+	delay(1000);
+
+	uint8_t power = 100;
+	int8_t line_start, line_end, line_delta;
+	for (int i = 0; i < 6; i++)
+	{
+		Serial.print("Power: ");
+		Serial.println(power);
+		motors.drive_high_level(power, 0, 100);
+		line_start = LineSensor_read();
+		motors.enable(true, true);
+		delay(120);
+		motors.enable(false, false);
+		
+		delay(500);
+		line_end = LineSensor_read();
+		line_delta = line_end - line_start;
+		Serial.print("Line start: ");
+		Serial.println(line_start);
+		Serial.print("Line end: ");
+		Serial.println(line_end);
+		Serial.print("Line delta: ");
+		Serial.println(line_delta);
+
+		motors.drive_high_level(power, 0, -100);
+		motors.enable(true, true);
+		delay(120);
+		motors.enable(false, false);
+
+		delay(1000);
+
+		power -= 5;
 	}
 
-	if (stream && millis() - last_time > 20)
-	{
-		last_time = millis();
-		int line = LineSensor_read(70);
-		Serial.write((uint8_t)0xFF);
-		Serial.write((uint8_t)0x00);
-		Serial.write((uint8_t)(line & 0x00FF));
-		Serial.write((uint8_t)((line >> 8) & 0x00FF));
-		// Serial.println(line);
-		GPIO_write(LED_G2, LineSensor_lineDetected());
-	}
+	GPIO_write(LED_B, LOW);
 }

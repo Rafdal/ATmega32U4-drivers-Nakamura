@@ -13,33 +13,20 @@
 #include "LineSensor.h"
 #include <EEPROM.h>
 
-/*******************************************************************************
- * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
- ******************************************************************************/
-
-/*******************************************************************************
- * ROM CONST VARIABLES WITH FILE LEVEL SCOPE
- ******************************************************************************/
 
 static const uint8_t sensor_pins[] = {SENSOR_1, SENSOR_2, SENSOR_3, SENSOR_4, SENSOR_5, SENSOR_6, SENSOR_7, SENSOR_8};
-/*******************************************************************************
- * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
- ******************************************************************************/
+
 
 static line_color_t line_color;
 static bool line_detected = false;
+static bool line_out_of_range = false;
+static bool last_direction = true;
 static int sensor_min[N_SENSORS]; // Valor minimo de cada sensor
 static int sensor_max[N_SENSORS]; // Valor maximo de cada sensor
 
-#define MID_VALUE ((N_SENSORS - 1) * POINTS_PER_SENSOR / 2)
-
 static uint8_t read_calibrated(uint8_t sensor_index);
 
-/*******************************************************************************
- *******************************************************************************
-                        GLOBAL FUNCTION DEFINITIONS
- *******************************************************************************
- ******************************************************************************/
+
 
 void LineSensor_init(line_color_t l_color)
 {
@@ -124,6 +111,7 @@ void LineSensor_printReadingsBinary()
 {
     for (int x = 0; x < N_SENSORS; x++)
     {
+        // los mando como 16 bits, Little Endian
         Serial.write(read_calibrated(x));
         Serial.write((uint8_t)0x00);
     }
@@ -140,42 +128,50 @@ void LineSensor_resetCalibration()
 
 void LineSensor_calibrateSensors()
 {
+        // La calibración sirve para tener el máximo rango de variación de los sensores
+        // independientemente de las condiciones de luz y superficies
     int val;
     for (int x = 0; x < N_SENSORS; x++)
     {
-        val = ADC_read(sensor_pins[x]);                         // Usamos 8 de los 10 bits
-        sensor_min[x] = (val < sensor_min[x]) ? val : sensor_min[x]; // Si es menor al valor minimo guardado, lo reemplazo
-        sensor_max[x] = (val > sensor_max[x]) ? val : sensor_max[x]; // Analogo al minimo
+        val = ADC_read(sensor_pins[x]);
+        sensor_min[x] = (val < sensor_min[x]) ? val : sensor_min[x];
+        sensor_max[x] = (val > sensor_max[x]) ? val : sensor_max[x];
     }
 }
 
-int LineSensor_read(uint8_t minimum_brightness)
+int LineSensor_read(uint8_t threshold)
 {
-    
-    static bool last_direction;
-
     line_detected = false;
 
     unsigned long w_sum = 0;
     unsigned long tot_sum = 0;
 
-    for (uint8_t x = 0; x < N_SENSORS; x++)
+    uint8_t detected_lines = 0; // Si se detectan muchas lineas, el robot se levanto
+
+    for (uint8_t x = 0; x < N_SENSORS && (detected_lines < N_SENSORS/2); x++)
     {
         uint8_t val = read_calibrated(x);
 
-        if (val >= minimum_brightness)
+        if (val >= threshold)
         { 
-            // At least one sensor has to detect a line
             line_detected = true;
-            w_sum += val * x * POINTS_PER_SENSOR;    // Weighted sum
-            tot_sum += val;       // Sum of all valid sensors
+            w_sum += val * x * POINTS_PER_SENSOR;    // Suma ponderada por distancia
+            tot_sum += val;                         // Valor total acumulado
+            detected_lines++;
         }
     }
     int line;
-    if (line_detected)
+    if (detected_lines >= N_SENSORS/2)
     {
-        line = (w_sum / tot_sum);                             // Weighted average
-        line = line - MID_VALUE; // Change scale from 0_7000 to -1000 _ 1000
+        line_out_of_range = true;
+        line_detected = false;
+        return 0;
+    }
+    line_out_of_range = false;
+    if (line_detected && (detected_lines < N_SENSORS/2))
+    {
+        line = (w_sum / tot_sum);                  // Similar a un centro de masa
+        line = line - MID_VALUE;                   // El centro queda en 0
     }
     else
     {
@@ -184,7 +180,7 @@ int LineSensor_read(uint8_t minimum_brightness)
 
     last_direction = line > 0;
 
-    return (int)line;
+    return line;
 }
 
 static uint8_t read_calibrated(uint8_t idx)
@@ -199,4 +195,9 @@ static uint8_t read_calibrated(uint8_t idx)
 bool LineSensor_lineDetected()
 {
     return line_detected;
+}
+
+bool LineSensor_lineOutOfRange()
+{
+    return line_out_of_range;
 }
