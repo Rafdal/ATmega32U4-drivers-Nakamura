@@ -13,6 +13,7 @@ OneButton btn2(BTN2, true, false);
 Motors motors;
 PID pid;
 
+bool stream = false;
 bool calib_mode = false;
 bool run = false;
 unsigned long last_time = 0;
@@ -22,6 +23,7 @@ unsigned long run_start_time = 0;
 unsigned long run_time_ms = 0;
 
 void motor_test_sequence(void); // No usado, NO USA PID
+void stream_raw_sensor_values(void);
 
 void setup()
 {
@@ -82,8 +84,10 @@ void setup()
 	btn2.attachClick([](){
 		run = false;
 		motors.disable();
-		GPIO_write(LED_G1, LOW);
+		// GPIO_write(LED_G1, LOW);
 		GPIO_write(LED_G2, LOW);
+		stream = !stream;
+		GPIO_write(LED_G1, stream);
 	});
 
 	// STATIC TEST
@@ -126,6 +130,12 @@ void loop()
 		LineSensor_calibrateSensors();
 	}
 
+	if (stream && millis() - last_time > 100)
+	{
+		last_time = millis();
+		stream_raw_sensor_values();
+	}
+
 	if (run && millis() - last_time > pid.deltaT_ms())
 	{
 		last_time = millis();
@@ -164,6 +174,16 @@ void loop()
 }
 
 
+
+void stream_raw_sensor_values(void)
+{
+	Serial.write((uint8_t)0xFF);
+	Serial.write((uint8_t)0x00);
+	LineSensor_printReadingsBinary();
+	int line = LineSensor_read();
+	Serial.write((uint8_t)(line & 0xFF));
+	Serial.write((uint8_t)(line >> 8));
+}
 
 
 

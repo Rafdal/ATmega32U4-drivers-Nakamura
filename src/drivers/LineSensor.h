@@ -51,7 +51,7 @@ void LineSensor_resetCalibration();
  * @param threshold    Umbral de activación para considerar la presencia de la línea (0-255)
  * @returns Posición de la línea entre -MID_VALUE y MID_VALUE
 */
-int LineSensor_read(uint8_t threshold = 70);
+int LineSensor_read(uint8_t threshold = 120);
 
 /**
  * @brief Retorna true cuando la linea fue detectada en el último llamado a LineSensor_read
