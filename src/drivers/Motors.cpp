@@ -110,3 +110,32 @@ void Motors::drive(uint8_t power_L, uint8_t power_R, motor_dir_t dir_L, motor_di
     PWM_write((PWM_pin_t)this->L_cfg.pin_pwm, power_L);
     PWM_write((PWM_pin_t)this->R_cfg.pin_pwm, power_R);
 }
+
+
+// void Motors::drive_high_level(int8_t power, int8_t direction)
+// {
+//     uint8_t power_L, power_R;
+//     motor_dir_t dir_L, dir_R;
+
+//     if (direction == 0) // no turn
+//     {
+//         power_L = power;
+//         power_R = power;
+//         dir_L = (power_L >= 0) ? (FORWARD) : (REVERSE);
+//         dir_R = dir_L;
+//     }
+//     else if (direction > 0) // turn right
+//     {
+//         power_L = power;
+//         power_R = power - direction;
+//         dir_L = (power_L >= 0) ? (FORWARD) : (REVERSE);
+//         dir_R = (power_R >= 0) ? (FORWARD) : (REVERSE);
+//     }
+//     else // turn left
+//     {
+//         power_L = power + direction;
+//         power_R = power;
+//         dir_L = (power_L >= 0) ? (FORWARD) : (REVERSE);
+//         dir_R = (power_R >= 0) ? (FORWARD) : (REVERSE);
+//     }
+// }

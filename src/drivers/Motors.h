@@ -36,11 +36,26 @@ public:
     // Test
     void test_L_motor(uint8_t power, motor_dir_t dir = FORWARD, unsigned long msecs = 1000);
     void test_R_motor(uint8_t power, motor_dir_t dir = FORWARD, unsigned long msecs = 1000);
-    void test_both(uint8_t power, motor_dir_t dir, unsigned long msecs = 1000);
+    void test_both(uint8_t power, motor_dir_t dir = FORWARD, unsigned long msecs = 1000);
 
-    // control
+    // Activar puente H (true = activo, false = desactivado)
     void enable(bool enable_L, bool enable_R);
+
+    /**
+     * @brief Maneja la velocidad y dirección de los motores
+     * @param power_L Potencia del motor izquierdo (0-100)
+     * @param power_R Potencia del motor derecho (0-100)
+     * @param dir_L Dirección del motor izquierdo (FORWARD o REVERSE)
+     * @param dir_R Dirección del motor derecho (FORWARD o REVERSE)
+     */
     void drive(uint8_t power_L, uint8_t power_R, motor_dir_t dir_L, motor_dir_t dir_R);
+
+    /**
+     * @brief Maneja la velocidad y dirección de los motores de forma más simple
+     * @param power Potencia de ambos motores (-100 a 100)
+     * @param direction Dirección de ambos motores, de -100 (Izq) a 100 (Der)
+     */
+    // void drive_high_level(int8_t power, int8_t direction);
 
 };
 

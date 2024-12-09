@@ -9,10 +9,11 @@
 
 #include <Arduino.h>
 #include "App.h"
-#include "ADC.h"
-#include "GPIO.h"
-#include "PWM.h"
-#include "SENSORS.h"
+#include "drivers/board.h"
+#include "drivers/ADC.h"
+#include "drivers/GPIO.h"
+#include "drivers/PWM.h"
+#include "drivers/LineSensor.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -71,7 +72,7 @@ static rece_mode_t robot_state =IDLE;
 void initApplication() {
   initBoard();
   initMotors();
-  initSensors(LINE_COLOR);
+  LineSensor_init(LINE_COLOR);
 }
 
 void runApplication() {
@@ -105,7 +106,7 @@ void runApplication() {
 
 void race(void){
   last_line_pos = line_pos;
-  line_pos = getLinePosition(LINE_COLOR);
+  line_pos = LineSensor_read(LINE_COLOR);
   float PID_correction, max_correction, mspeed;
 
   PID_correction = get_PID_correction(line_pos, last_line_pos, KP, KD, KI);
@@ -126,7 +127,7 @@ void calibration_routine(int cal_time){
 	GPIO_write(LED_G1, LOW);
   while((ms + cal_time) > millis()){
     GPIO_write(LED_G1, (millis()%100 < 50));        //Blink cada 50ms
-    calibrateSensors();
+    LineSensor_calibrateSensors();
   }
 
 }

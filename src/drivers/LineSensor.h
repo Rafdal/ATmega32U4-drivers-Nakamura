@@ -11,14 +11,14 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include <stdbool.h>
+#include <Arduino.h>
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
-#define N_SENSORS       8   // Cantidad de sensores
-#define LINE_RANGE      1000
+#define POINTS_PER_SENSOR   16
+#define N_SENSORS           8       // Cantidad de sensores
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -37,26 +37,38 @@ typedef enum{
  * @brief Inicializar sensores
  * @return Descripcion valor que devuelve
 */
-void initSensors(line_color_t l_color);
+void LineSensor_init(line_color_t l_color);
+
+void LineSensor_initFromEEPROM(line_color_t l_color);
+
+void LineSensor_saveCalibrationToEEPROM();
+
+void LineSensor_printCalibration();
+
+void LineSensor_printReadings();
+
+void LineSensor_printReadingsBinary();
 
 /**
  * @brief   Obtiene los valores minimos y maximos de cada sensor para normalizar la medicion
 */
-void calibrateSensors();
+void LineSensor_calibrateSensors();
+
+void LineSensor_resetCalibration();
 
 /**
  * @brief Retorna la posición de la linea respecto del arreglo de sensores
  * @param minimum_brightness    Mínimo valor de brillo que se considera parte de la línea
- *                              (porcentaje expresado de 0.0 a 1.0)
+ *                              (porcentaje expresado de 0 a 100)
  * @return Posición de la línea entre -LINE_RANGE y LINE_RANGE
 */
-float getLinePosition(float minimum_brightness);
+int LineSensor_read(uint8_t minimum_brightness);
 
 /**
- * @brief Retorna true cuando la linea fue detectada en el último llamado a getLinePosition
+ * @brief Retorna true cuando la linea fue detectada en el último llamado a LineSensor_read
  * @return true si la línea fue detectada
 */
-bool lineWasDetected();
+bool LineSensor_lineDetected();
 
 
 /*******************************************************************************

@@ -7,6 +7,8 @@
 
 #include "drivers/Motors.h"
 
+#include "drivers/LineSensor.h"
+
 uint8_t ir_sen_pins[] = {SENSOR_1, SENSOR_2, SENSOR_3, SENSOR_4, SENSOR_5, SENSOR_6, SENSOR_7, SENSOR_8};
 uint8_t ir_sen_vals[8];
 
@@ -15,7 +17,10 @@ OneButton btn2(BTN2, true, false);
 
 Motors motors;
 
-void read_analog(void);
+bool stream = false;
+bool calib_mode = false;
+bool stream_raw = false;
+unsigned long last_time = 0;
 
 void setup()
 {
@@ -26,12 +31,50 @@ void setup()
 
 	GPIO_mode(LED_G1, OUTPUT);
 	GPIO_mode(LED_G2, OUTPUT);
+	GPIO_mode(LED_B, OUTPUT);
 
+	LineSensor_initFromEEPROM(LINE_BLACK);
+
+	// Print calibration values
 	btn1.attachClick([](){
-		delay(1000);
-		GPIO_write(LED_G1, HIGH);
-		motors.test_both(100, FORWARD);
-		GPIO_write(LED_G1, LOW);
+		LineSensor_printCalibration();
+	});
+
+	// Calibrate
+	btn1.attachDoubleClick([](){
+		calib_mode = !calib_mode;
+		GPIO_write(LED_B, calib_mode);
+		if (calib_mode)
+		{
+			LineSensor_resetCalibration();
+		}
+	});
+
+	// Save calibration
+	btn1.attachLongPressStart([](){
+		GPIO_write(LED_B, HIGH);
+		LineSensor_saveCalibrationToEEPROM();
+		delay(10);
+		GPIO_write(LED_B, LOW);
+	});
+
+	// Print readings
+	btn2.attachClick([](){
+		LineSensor_printReadings();
+		int line = LineSensor_read(50);
+		Serial.print("Line: ");
+		Serial.println(line);
+	});
+
+	btn2.attachDoubleClick([](){
+		stream_raw = !stream_raw;
+		GPIO_write(LED_G1, stream_raw);
+	});
+
+	btn2.attachLongPressStart([](){
+		stream = !stream;
+		GPIO_write(LED_G2, LOW);
+		GPIO_write(LED_G1, stream);
 	});
 
 }
@@ -40,52 +83,36 @@ void loop()
 {
 	btn1.tick();
 	btn2.tick();
-	// read_analog();
-	// put your main code here, to run repeatedly:
-	// Serial.println("Hello World");
-	// read_analog();
-	// state = !state;
-	// GPIO_write(pins[selected], state);
-	// Serial.print("Selected: ");
-	// Serial.println(pin_names[selected]);
 
-	// Serial.println("GPIO Values:");
-	// for (uint8_t i = 0; i < 12; i++)
-	// {
-	// 	Serial.print(pin_names[i]);
-	// 	Serial.print("\t");
-	// }
-	// Serial.println();
-	// for (uint8_t i = 0; i < 12; i++)
-	// {
-	// 	Serial.print(GPIO_read(pins[i]));
-	// 	Serial.print("\t");
-	// }
-	// Serial.println();
-}
-
-
-
-
-void read_analog(void)
-{
-	for (uint8_t i = 0; i < 8; i++)
+	if (calib_mode && millis() - last_time > 100)
 	{
-		ir_sen_vals[i] = ADC_read(ir_sen_pins[i]) >> 2;
+		last_time = millis();
+		LineSensor_calibrateSensors();
 	}
 
-	Serial.write((uint8_t)0xFF);
-	Serial.write((uint8_t)0x00);
-	for (uint8_t i = 0; i < 8; i++)
+	if (stream_raw && millis() - last_time > 20)
 	{
-		Serial.write(ir_sen_vals[i]);
+		last_time = millis();
+		// Serial.write((uint8_t)0xFF);
+		// Serial.write((uint8_t)0x00);
+		// LineSensor_printReadingsBinary();
+		LineSensor_printReadings();
+		int line = LineSensor_read(50);
+		// Serial.write((uint8_t)(line & 0x00FF));
+		// Serial.write((uint8_t)((line >> 8) & 0x00FF));
+		Serial.print("\tLine: ");
+		Serial.println(line);
 	}
 
-	// uint8_t s1 = map(ADC_read(SENSOR_1), 0, 1023, 0, 160);
-	// uint8_t s2 = map(ADC_read(SENSOR_2), 0, 1023, 0, 160);
-	// Serial.print("S1:\t");
-	// Serial.print(s1);
-	// Serial.print("\tS2:\t");
-	// Serial.println(s2);
-	// PWM_write_both(s1, s2);
+	if (stream && millis() - last_time > 20)
+	{
+		last_time = millis();
+		int line = LineSensor_read(50);
+		Serial.write((uint8_t)0xFF);
+		Serial.write((uint8_t)0x00);
+		Serial.write((uint8_t)((line >> 8) & 0x00FF));
+		Serial.write((uint8_t)(line & 0x00FF));
+		// Serial.println(line);
+		GPIO_write(LED_G2, LineSensor_lineDetected());
+	}
 }
