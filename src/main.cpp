@@ -38,9 +38,10 @@ void setup()
 
 	pid.set_out_limits(-100, 100);	// Saturación de la salida
 	pid.set_integral_limit(100);	// Saturación de la integral
-	pid.set_freq(40);				// Hz
+	pid.set_freq(100);				// Hz
 
-	pid.set_K(11.7f, 0.0f, 0.25f);		// ANDA FLAMA
+	// pid.set_K(11.7f, 1.3f, 0.37f);		// ANDA FLAMA
+	pid.set_K(18.0f, 0.0f, 0.0f);		// Puro P
 	// pid.kP = 16.0; // Oscila
 
 	GPIO_mode(LED_G1, OUTPUT);

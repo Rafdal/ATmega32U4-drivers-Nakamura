@@ -115,8 +115,8 @@ void Motors::drive(uint8_t power_L, uint8_t power_R, motor_dir_t dir_L, motor_di
     power_L = (power_L > 100) ? (100) : (power_L);
     power_R = (power_R > 100) ? (100) : (power_R);
 
-    dir_L = (motor_dir_t) this->L_cfg.default_dir ^ dir_L;
-    dir_R = (motor_dir_t) this->R_cfg.default_dir ^ dir_R;
+    dir_L = (motor_dir_t) (this->L_cfg.default_dir ^ (bool)dir_L);
+    dir_R = (motor_dir_t) (this->R_cfg.default_dir ^ (bool)dir_R);
     power_L = (dir_L == FORWARD) ? (power_L) : (100 - power_L);
     power_R = (dir_R == FORWARD) ? (power_R) : (100 - power_R);
     PWM_write((PWM_pin_t)this->L_cfg.pin_pwm, power_L);
